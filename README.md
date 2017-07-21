@@ -13,3 +13,5 @@ where x is space and t is time, and subscripts indicate differentiation. The alg
 
 The results show that Julia is competitive with Python and Matlab in line count (about twenty lines of code) 
 and C++ and Fortran for execution speed (slightly fast than C++, slightly slower than Fortran). 
+
+Complete results and discussion are in [1-Kuramoto-Sivashinksy-benchmark.ipynb](1-Kuramoto-Sivashinksy-benchmark.ipynb)
