@@ -214,8 +214,8 @@ function ksintegrateUnrolled(u, Lx, dt, Nt)
     # timestepping loop
     for n = 0:Nt
 
-        copy!(Nn, Nn1)
-        copy!(u,  Nn)
+        copy!(Nn1, Nn)
+        copy!(Nn,  u)
 
         IFFT!*Nn # in-place FFT
 
