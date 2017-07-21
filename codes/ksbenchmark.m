@@ -5,7 +5,6 @@ function ksbenchmark(Nx)
   Lx = Nx/16*pi;     % spatial domain [0, L] periodic
   dt = 1/16;         % discrete time step 
   T  = 200;          % integrate from t=0 to t=T
-  nsave = 1/dt;      % save every nplot-th time step, including zeroth. If nsave=0, don't save
   Nt = floor(T/dt);  % total number of timesteps
 
   x = Lx*(0:Nx-1)/Nx;
@@ -17,27 +16,14 @@ function ksbenchmark(Nx)
 
   for r=1:Nruns;
     tic();
-    [t,U] = ksintegrate(u0, Lx, dt, Nt, nsave);
+    u = ksintegrate(u0, Lx, dt, Nt, nsave);
     cputime = toc()
     if r > skip
       avgtime = avgtime + cputime;
     end
   end
 
-  %unorm = ksnorm(U(:,1))
   avgtime = avgtime/(Nruns-skip)
-  x = Lx*(0:Nx-1)/Nx;
-
-  clf()
-  pcolor(x,t,U);
-  shading flat, lighting phong, axis tight
-  material('dull');
-  caxis([-3.5, 3.5])
-  colorbar();
-  ylabel('t')
-  xlabel('x')
-  title('Kuramoto-Sivashinksy simulation, u(x,t)')
-
 end
 
 
@@ -46,7 +32,7 @@ function n = ksnorm(u)
   n = sqrt((u * u') /length(u));
 end
 
-function [t,U] = ksintegrate(u, Lx, dt, Nt, nsave)
+function u = ksintegrate(u, Lx, dt, Nt, nsave)
 % ksintegrate: integrate kuramoto-sivashinsky equation 
 %        u_t = -u*u_x - u_xx - u_xxxx, domain x in [0,Lx], periodic BCs 
 %
@@ -68,12 +54,6 @@ function [t,U] = ksintegrate(u, Lx, dt, Nt, nsave)
   D = i*alpha;                   % D = d/dx operator in Fourier space
   L = alpha.^2 - alpha.^4;       % linear operator -D^2 - D^3 in Fourier space
   G = -0.5*D;                    % -1/2 D operator in Fourier space
-
-  NT = floor(Nt/nsave);          % number of saved time steps, not including zeroth
-  t = (0:NT)*(dt*nsave);         % times of saved timesteps
-  U = zeros(NT+1, Nx);           % saved data
-  U(1,:) = u;                   
-  s = 1;                         % index for saving data U(s,:), t = (s-1)*dt*nsave
 
   % Express PDE as u_t = Lu + N(u), L is linear part, N nonlinear part.
   % Then Crank-Nicolson Adams-Bashforth discretization is 
@@ -103,12 +83,7 @@ function [t,U] = ksintegrate(u, Lx, dt, Nt, nsave)
 
     u = A_inv .* (B .* u + dt32*Nn - dt2*Nn1);
 
-    if (mod(n, nsave) == 0)
-      s = s+1;                 
-      U(s,:) = real(ifft(u));  % save u(x,t) (physical)	
-    end
-
   end
-
+  u = real(ifft(u))
 end
 
