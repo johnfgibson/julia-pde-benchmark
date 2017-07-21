@@ -46,10 +46,8 @@ function ksintegrateUnrolled(u, Lx, dt, Nt);
     # timestepping loop
     for n = 0:Nt
 
-        @inbounds for i = 1:length(Nn)
-            Nn1[i] = Nn[i];
-            Nn[i] = u[i];            
-        end
+        copy!(Nn, Nn1)
+        copy!(u,  Nn)
 
         IFFT!*Nn; # in-place FFT
 

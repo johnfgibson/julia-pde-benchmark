@@ -214,10 +214,8 @@ function ksintegrateUnrolled(u, Lx, dt, Nt)
     # timestepping loop
     for n = 0:Nt
 
-        @inbounds for i = 1:length(Nn)
-            Nn1[i] = Nn[i]
-            Nn[i] = u[i]            
-        end
+        copy!(Nn, Nn1)
+        copy!(u,  Nn)
 
         IFFT!*Nn # in-place FFT
 
@@ -239,4 +237,22 @@ function ksintegrateUnrolled(u, Lx, dt, Nt)
 
     IFFT!*u
     real(u)
+end
+
+""" 
+   Construct initial conditions for benchmarking ksintegrate* algorithms
+   Useful for using Julia's benchmark utilities. 
+"""
+
+function ksinitconds(Nx)
+    Lx = Nx/16*pi             # spatial domain [0, L] periodic
+    dt = 1/16                 # discrete time step 
+    T  = 200                  # integrate from t=0 to t=T
+    nplot = round(Int,1/dt)   # save every nploth time step
+    Nt = round(Int, T/dt)     # total number of timesteps
+ 
+    x = Lx*(0:Nx-1)/Nx
+    u0 = cos.(x) + 0.2*sin.(x/8) + 0.01*cos.(x/16) 
+
+    u0, Lx, dt, Nt
 end
