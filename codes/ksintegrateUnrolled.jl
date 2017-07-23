@@ -19,7 +19,7 @@ unrolls all the vector equations into for loops. For some reason this works
 better (runs faster) than the unrolled loops produced by the Julia compiler. 
 ```
 
-function ksintegrateUnrolled(u, Lx, dt, Nt);
+function ksintegrateUnrolled(u, Lx, dt, Nt)
     u = (1+0im)*u                       # force u to be complex
     Nx = length(u)                      # number of gridpoints
     kx = vcat(0:Nx/2-1, 0:0, -Nx/2+1:-1)# integer wavenumbers: exp(2*pi*kx*x/L)
@@ -38,10 +38,10 @@ function ksintegrateUnrolled(u, Lx, dt, Nt);
     FFT! = plan_fft!(u, flags=FFTW.ESTIMATE)
     IFFT! = plan_ifft!(u, flags=FFTW.ESTIMATE)
 
-    # compute nonlinear term Nu == -u u_x and Nuprev (Nu at prev timestep)
-    Nn  = G.*fft(u.^2); # Nnf == -1/2 d/dx (u^2) = -u u_x, spectral
-    Nn1 = copy(Nn);     # use Nnf1 = Nnf at first time step
-    FFT!*u;
+    # compute nonlinear term Nn == N(u^n) = -u u_x and Nn1 
+    Nn  = G.*fft(u.^2) # Nn == -1/2 d/dx (u^2) = -u u_x, spectral
+    Nn1 = copy(Nn)     # Nn1 == N(u^{n-1}). For first timestep, let Nn1 = Nn
+    FFT!*u
 
     # timestepping loop
     for n = 0:Nt
@@ -49,20 +49,20 @@ function ksintegrateUnrolled(u, Lx, dt, Nt);
         copy!(Nn1, Nn)
         copy!(Nn,  u)
 
-        IFFT!*Nn; # in-place FFT
+        IFFT!*Nn # in-place FFT
 
         @inbounds for i = 1:length(Nn)
-            @fastmath Nn[i] = Nn[i]*Nn[i];
+            @fastmath Nn[i] = Nn[i]*Nn[i]
         end
 
-        FFT!*Nn;
+        FFT!*Nn
 
         @inbounds for i = 1:length(Nn)
-            @fastmath Nn[i] = G[i]*Nn[i];
+            @fastmath Nn[i] = G[i]*Nn[i]
         end
 
         @inbounds for i = 1:length(u)
-            @fastmath u[i] = B[i]* (A[i] * u[i] + dt32*Nn[i] - dt2*Nn1[i]);
+            @fastmath u[i] = B[i]* (A[i] * u[i] + dt32*Nn[i] - dt2*Nn1[i])
         end
 
     end
