@@ -86,7 +86,7 @@ double precision function mynorm(u,Nx)
    double complex, save :: u_(0:Nx-1), uu(0:Nx-1) 
    double complex, save :: us(0:Nx-1), uus(0:Nx-1)
    logical, save :: planned=.false.
-   integer*8 :: plan_u2us, plan_us2u, plan_uu2uus, plan_uus2uu
+   integer*8, save :: plan_u2us, plan_us2u, plan_uu2uus, plan_uus2uu
    integer :: n, fftw_patient=32, fftw_estimate=64, fftw_forward=-1, fftw_backward=1
 
    if(.not.planned) then
