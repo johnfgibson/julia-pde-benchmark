@@ -50,5 +50,4 @@ function u = ksintegrate(u, Lx, dt, Nt, nsave)
 
   end
   u = real(ifft(u))
-
 end

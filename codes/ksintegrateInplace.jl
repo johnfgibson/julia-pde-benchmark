@@ -1,4 +1,4 @@
-```
+"""
 ksintegrate: integrate kuramoto-sivashinsky equation (Julia)
        u_t = -u*u_x - u_xx - u_xxxx, domain x in [0,Lx], periodic BCs 
 
@@ -18,9 +18,7 @@ This implementation has two improvements over ksintegrateNaive.jl. It uses
    (2) loop fusion: Julia can translate arithmetic vector expressions in dot syntax 
        to single for loop over the components, which should be much faster than
        constructing a temporary vector for each operation in the vector expression. 
-   
-```
-
+"""   
 function ksintegrateInplace(u, Lx, dt, Nt)
     u = (1+0im)*u                       # force u to be complex
     Nx = length(u)                      # number of gridpoints

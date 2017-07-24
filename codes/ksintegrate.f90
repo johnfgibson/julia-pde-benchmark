@@ -19,14 +19,13 @@
    double complex, save :: u_(0:Nx-1), uu(0:Nx-1) 
    double complex, save :: us(0:Nx-1), uus(0:Nx-1)
    logical, save :: planned=.false.
-   integer*8 :: plan_u2us, plan_us2u, plan_uu2uus, plan_uus2uu
+   integer*8, save :: plan_u2us, plan_us2u, plan_uu2uus
    integer :: n, fftw_patient=32, fftw_estimate=64, fftw_forward=-1, fftw_backward=1
 
    if(.not.planned) then
       call dfftw_plan_dft_1d(plan_u2us, Nx, u_, us, fftw_forward, fftw_estimate)
       call dfftw_plan_dft_1d(plan_us2u, Nx, us, u_, fftw_backward, fftw_estimate)
       call dfftw_plan_dft_1d(plan_uu2uus, Nx, uu, uus, fftw_forward, fftw_estimate)
-      call dfftw_plan_dft_1d(plan_uus2uu, Nx, uus, uu, fftw_backward, fftw_estimate)
       planned = .true.
    end if
 

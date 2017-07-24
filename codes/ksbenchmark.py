@@ -4,29 +4,46 @@ from numpy.fft import ifft
 from pylab import *
 import timeit
 
-def ksbenchmark(Nx) :
+
+def ksnorm(u) :
+    """ksnorm(u) : sqrt(1/Lx int_0^Lx u^2 dx)"""
+    N = size(u)
+    s = 0
+    for i in range(0, N) :
+        s += u[i]*u[i]
+    return sqrt(s/N)
+    
+
+def ksbenchmark(Nx, printnorm=False) :
     """ksbenchmark: benchmark the KS-CNAB2 algorithm for Nx gridpoints"""
 
     Lx = Nx/16*pi   # spatial domain [0, L] periodic
     dt = 1.0/16     # discrete time step 
     T  = 200.0      # integrate from t=0 to t=T
-
     Nt  = T/dt       # total number of time steps
-    x = arange(0,Nx)*Lx/Nx;
-    u = cos(x/16)*(1+2*sin(x/16))*(1+0.01*sin(x/32));
 
-    Nruns = 5;
-    avgtime = 0;
+    x = (Lx/Nx)*arange(0,Nx)
+    u0 = cos(x) + 0.1*sin(x/8) + 0.01*cos((2*pi/Lx)*x);
+    u = 0
+
+    Nruns = 5
+    skip = 1 
+    avgtime = 0
 
     for n in range(Nruns) :
         tic = timeit.default_timer()
-        ksintegrate(u,Lx,dt, Nt)
+        u = ksintegrate(u0,Lx,dt, Nt)
         toc = timeit.default_timer()
         print ("cputime == ", toc - tic)
-        avgtime += toc - tic;
+        avgtime += toc - tic
 
     avgtime /= Nruns
-    print ("avgtime == ", avgtime)
+
+    if printnorm :
+        print("norm(u(0)) == ", ksnorm(u0))
+        print("norm(u(T)) == ", ksnorm(u))
+
+    print("avgtime == ", avgtime)
 
 def ksintegrate(u, Lx, dt, Nt) : 
     """ksintegrate: integrate kuramoto-sivashinsky equation (Python)
@@ -71,7 +88,7 @@ def ksintegrate(u, Lx, dt, Nt) :
     u = fft(u);       # transform u (spectral)
 
     # timestepping loop
-    for n in range(0,int(Nt)+1) :
+    for n in range(0,int(Nt)) :
 
         Nn1 = Nn;                        # shift nonlinear term in time: N^{n-1} <- N^n
         uu = real(ifft(u))

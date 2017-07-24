@@ -1,4 +1,4 @@
-```
+"""
 ksintegrateNaive: integrate kuramoto-sivashinsky equation (Julia)
        u_t = -u*u_x - u_xx - u_xxxx, domain x in [0,Lx], periodic BCs 
 
@@ -14,8 +14,8 @@ ksintegrateNaive: integrate kuramoto-sivashinsky equation (Julia)
 
 This a line-by-line translation of a Matlab code into Julia. It uses out-of-place
 FFTs and doesn't pay any attention to the allocation of temporary vectors within
-the time-stepping loop. Hence the name "naive"
-```
+the time-stepping loop. Hence the name "naive".
+"""
 function ksintegrateNaive(u, Lx, dt, Nt)
     Nx = length(u)                  # number of gridpoints
     x = collect(0:(Nx-1)/Nx)*Lx
@@ -42,18 +42,17 @@ function ksintegrateNaive(u, Lx, dt, Nt)
     B = (ones(Nx) - dt2*L).^(-1)
 
     Nn  = G.*fft(u.*u) # -u u_x (spectral), notation Nn = N^n     = N(u(n dt))
-    Nn1 = Nn           #                   notation Nn1 = N^{n-1} = N(u((n-1) dt))
+    Nn1 = copy(Nn)     #                   notation Nn1 = N^{n-1} = N(u((n-1) dt))
     u  = fft(u)        # transform u to spectral
 
     # timestepping loop
     for n = 0:Nt
-        Nn1 = Nn                       # shift nonlinear term in time: N^{n-1} <- N^n
+        Nn1 = copy(Nn)                 # shift nonlinear term in time: N^{n-1} <- N^n
         Nn  = G.*fft(real(ifft(u)).^2) # compute Nn = -u u_x
 
         u = B .* (A .* u + dt32*Nn - dt2*Nn1)
     end
 
     real(ifft(u))
-
 end
 

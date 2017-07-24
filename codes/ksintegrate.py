@@ -41,7 +41,7 @@ def ksintegrate(u, Lx, dt, Nt) :
     u = fft(u);       # transform u (spectral)
 
     # timestepping loop
-    for n in range(0,int(Nt)+1) :
+    for n in range(0,int(Nt)) :
 
         Nn1 = Nn;                        # shift nonlinear term in time: N^{n-1} <- N^n
         Nn  = G*fft(real(ifft(u*u)));    # compute Nn == -u u_x (spectral)

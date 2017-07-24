@@ -15,13 +15,19 @@ double ksnorm(Complex* u, int Nx);
 
 int main(int argc, char* argv[]) {
 
+  // to be set as command-line args
+  int Nx = 0;
+  bool printnorms = false;
 
-  if (argc != 2) {
+  if (argc < 2) {
     printf("please provide one integer argument Nx\n");
     exit(1);
   }
+  Nx = atoi(argv[1]);  
 
-  int Nx = atoi(argv[1]);
+  if (argc >= 3)
+    printnorms = bool(atoi(argv[2]));
+
   cout << "Nx == " << Nx << endl;
 
   double dt = 1.0/16.0;
@@ -63,12 +69,13 @@ int main(int argc, char* argv[]) {
 
     printf("cputtime == %f\n", cputime);
   }
+  printf("norm(u(0)) == %f\n", ksnorm(u0, Nx)); 
+  printf("norm(u(T)) == %f\n", ksnorm(u, Nx)); 
 
+  
   avgtime /= (Nruns-skip);
   printf("avgtime == %f\n", avgtime);
 
-  double unorm = ksnorm(u, Nx);
-  //printf("norm(u) == %f\n", unorm); 
   delete[] u0;
   delete[] u;
   delete[] x;

@@ -4,7 +4,7 @@ using FFTW
   ksbenchmark(Nx, ksintegrator): benchmark a kuramoto-sivashinksy integration algorithm
     on Nx gridpoints. Usage example: ksbenchmark(512, ksintegrateNaive)
 """
-function ksbenchmark(Nx, ksintegrator)
+function ksbenchmark(Nx, ksintegrator, printnorms=false)
 
     Lx = Nx/16*pi             # spatial domain [0, L] periodic
     dt = 1/16                 # discrete time step 
@@ -13,10 +13,9 @@ function ksbenchmark(Nx, ksintegrator)
     Nt = round(Int, T/dt)     # total number of timesteps
  
     x = Lx*(0:Nx-1)/Nx
-    u0 = cos.(x) + 0.2*sin.(x/8) + 0.01*cos.(x/16) 
-    u = u0
+    u0 = cos.(x) + 0.1*sin.(x/8) + 0.01*cos.((2*pi/Lx)*x) 
+    u = copy(u0)
 
-    #@show ksnorm(u0)
     Nruns = 5
     skip = 1
     avgtime = 0
@@ -30,7 +29,12 @@ function ksbenchmark(Nx, ksintegrator)
         end
     end
     
-    #@show ksnorm(u)
+    
+    if printnorms
+        @show ksnorm(u0)
+        @show ksnorm(u)
+    end
+
     avgtime = avgtime/(Nruns-skip)
     @show avgtime
 
@@ -60,7 +64,7 @@ ksintegrateNaive: integrate kuramoto-sivashinsky equation (Julia)
 
 This a line-by-line translation of a Matlab code into Julia. It uses out-of-place
 FFTs and doesn't pay any attention to the allocation of temporary vectors within
-the time-stepping loop. Hence the name "naive"
+the time-stepping loop. Hence the name "naive".
 """
 function ksintegrateNaive(u, Lx, dt, Nt)
     Nx = length(u)                  # number of gridpoints
@@ -88,12 +92,12 @@ function ksintegrateNaive(u, Lx, dt, Nt)
     B = (ones(Nx) - dt2*L).^(-1)
 
     Nn  = G.*fft(u.*u) # -u u_x (spectral), notation Nn = N^n     = N(u(n dt))
-    Nn1 = Nn           #                   notation Nn1 = N^{n-1} = N(u((n-1) dt))
+    Nn1 = copy(Nn)     #                   notation Nn1 = N^{n-1} = N(u((n-1) dt))
     u  = fft(u)        # transform u to spectral
 
     # timestepping loop
-    for n = 0:Nt
-        Nn1 = Nn                       # shift nonlinear term in time: N^{n-1} <- N^n
+    for n = 1:Nt
+        Nn1 = copy(Nn)                 # shift nonlinear term in time: N^{n-1} <- N^n
         Nn  = G.*fft(real(ifft(u)).^2) # compute Nn = -u u_x
 
         u = B .* (A .* u + dt32*Nn - dt2*Nn1)
@@ -148,7 +152,7 @@ function ksintegrateInplace(u, Lx, dt, Nt)
     FFT!*u
 
     # timestepping loop
-    for n = 0:Nt
+    for n = 1:Nt
 
         Nuprev .= Nu   # shift nonlinear term in time
         Nu .= u         # put u into N in prep for comp of nonlineat
@@ -212,10 +216,10 @@ function ksintegrateUnrolled(u, Lx, dt, Nt)
     FFT!*u
 
     # timestepping loop
-    for n = 0:Nt
+    for n = 1:Nt
 
-        copy!(Nn1, Nn)
-        copy!(Nn,  u)
+        Nn1 .= Nn
+        Nn .= u
 
         IFFT!*Nn # in-place FFT
 
@@ -243,7 +247,6 @@ end
    Construct initial conditions for benchmarking ksintegrate* algorithms
    Useful for using Julia's benchmark utilities. 
 """
-
 function ksinitconds(Nx)
     Lx = Nx/16*pi             # spatial domain [0, L] periodic
     dt = 1/16                 # discrete time step 

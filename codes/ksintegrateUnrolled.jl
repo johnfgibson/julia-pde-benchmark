@@ -1,4 +1,4 @@
-```
+"""
 ksintegrateUnrolled: integrate kuramoto-sivashinsky equation (Julia)
   
 
@@ -17,8 +17,7 @@ ksintegrateUnrolled: integrate kuramoto-sivashinsky equation (Julia)
 This implementation has one improvements over ksintegrateInplace.jl. It explicitly
 unrolls all the vector equations into for loops. For some reason this works
 better (runs faster) than the unrolled loops produced by the Julia compiler. 
-```
-
+"""
 function ksintegrateUnrolled(u, Lx, dt, Nt)
     u = (1+0im)*u                       # force u to be complex
     Nx = length(u)                      # number of gridpoints
@@ -46,8 +45,8 @@ function ksintegrateUnrolled(u, Lx, dt, Nt)
     # timestepping loop
     for n = 0:Nt
 
-        copy!(Nn1, Nn)
-        copy!(Nn,  u)
+        Nn1 .= Nn
+        Nn .= u
 
         IFFT!*Nn # in-place FFT
 
