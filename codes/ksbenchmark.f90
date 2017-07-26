@@ -2,6 +2,7 @@
    implicit none
    save
    integer,          parameter :: Nx = 131072
+   integer,	     parameter :: Nruns = 8
    double precision, parameter :: dt = 1d0/16d0
    double precision, parameter :: T  = 200d0
    double precision, parameter :: pi = 3.14159265358979323846d0
@@ -27,7 +28,7 @@ double precision function ksnorm(u,Nx)
  program main
    use KS
    implicit none
-   integer :: i,Nt,r, Nruns=5, skip=1
+   integer :: i,Nt,r, skip=1
    real :: tstart, tend, avgtime
    double precision :: u0norm
    double precision :: uTnorm

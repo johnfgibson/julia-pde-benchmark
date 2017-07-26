@@ -1,27 +1,27 @@
 #include <math.h>
 #include <time.h>
-#include <complex>
+#include <complex.h>
 #include <fftw3.h>
 #include <stdlib.h>
-#include <iostream>
-#include <fstream>
+#include <stdio.h>
+//#include <stdbool.h>
 
-using namespace std;
-
-typedef std::complex<double> Complex;
+typedef complex double Complex;
 
 void ksintegrate(Complex* u, int Nx, double Lx, double dt, int Nt);
 double ksnorm(Complex* u, int Nx);
 
+const double pi = 3.14159265358979323846; /* why doesn't M_PI from math.j work? :-( */
+
 int main(int argc, char* argv[]) {
 
-  // to be set as command-line args
-  int Nx = 0;
-  int Nruns = 5;
-  bool printnorms = false;
+  /* to be set as command-line args */
+  int Nx = 0;         /* number of x gridpoints */
+  int Nruns = 5;      /* number of benchmarking runs */
+  int printnorms = 0; /* can't figure out C bool type :-( */
 
   if (argc < 2) {
-    cout << "please provide one integer argument Nx\n [two optional args: Nruns printnorm]" << endl;
+    printf("please provide one integer argument Nx\n");
     exit(1);
   }
   Nx = atoi(argv[1]);  
@@ -30,29 +30,24 @@ int main(int argc, char* argv[]) {
     Nruns = atoi(argv[2]);
 
   if (argc >= 4)
-    printnorms = bool(atoi(argv[3]));
+    printnorms = atoi(argv[3]);
 
-  cout << "Nx == " << Nx << endl;
+  printf("Nx == %d\n", Nx);
 
   double dt = 1.0/16.0;
   double T  = 200.0;
-  double Lx = (M_PI/16.0)*Nx;
+  double Lx = (pi/16.0)*Nx;
   double dx = Lx/Nx;
   int Nt = (int)(T/dt);
 
-  double* x = new double[Nx];
-  Complex* u0 = new Complex[Nx];
-  Complex* u  = new Complex[Nx];
+  double* x   = malloc(Nx*sizeof(double));
+  Complex* u0 = malloc(Nx*sizeof(Complex));
+  Complex* u  = malloc(Nx*sizeof(Complex));
 
   for (int n=0; n<Nx; ++n) {
     x[n] = n*dx;
-    u0[n] = cos(x[n]) + 0.1*sin(x[n]/8) + 0.01*cos((2*M_PI/Lx)*x[n]);
+    u0[n] = cos(x[n]) + 0.1*sin(x[n]/8) + 0.01*cos((2*pi/Lx)*x[n]);
   }
-  //cout << "norm(u0) == " << ksnorm(u0,Nx) << endl;
-
-  //ofstream xs("x.asc");
-  //for (int n=0; n<Nx; ++n)
-  //xs << x[n] << '\n';
 
   int skip = 1;
   double avgtime = 0.0;
@@ -79,17 +74,17 @@ int main(int argc, char* argv[]) {
   avgtime /= (Nruns-skip);
   printf("avgtime == %f\n", avgtime);
 
-  delete[] u0;
-  delete[] u;
-  delete[] x;
+  free(u0);
+  free(u);
+  free(x);
 }
 
 void ksintegrate(Complex* u, int Nx, double Lx, double dt, int Nt) {
-  int* kx        = new int[Nx];     
-  double*  alpha = new double[Nx];  
-  Complex* D     = new Complex[Nx]; 
-  Complex* G     = new Complex[Nx]; 
-  double*  L     = new double[Nx];  
+  int* kx        = malloc(Nx*sizeof(int));
+  double*  alpha = malloc(Nx*sizeof(double));  
+  Complex* D     = malloc(Nx*sizeof(Complex)); 
+  Complex* G     = malloc(Nx*sizeof(Complex)); 
+  double*  L     = malloc(Nx*sizeof(double));  
 
   for (int n=0; n<Nx/2; ++n)      
     kx[n] = n;
@@ -97,39 +92,39 @@ void ksintegrate(Complex* u, int Nx, double Lx, double dt, int Nt) {
   for (int n=Nx/2+1; n<Nx; ++n)   
     kx[n] = -Nx + n;
   
-  const double a = 2*M_PI/Lx;
+  const double a = 2*pi/Lx;
   for (int n=0; n<Nx; ++n) {   
     alpha[n] = a*kx[n];   
-    double alpha2 = alpha[n]*alpha[n];  // alpha[n]^2
-    D[n] = Complex(0.0, alpha[n]);                     
+    double alpha2 = alpha[n]*alpha[n];  /* alpha[n]^2 */
+    D[n] = alpha[n]*I;                     
     L[n] = alpha2*(1-alpha2);
-    G[n] = Complex(0.0, -0.5*alpha[n]);
+    G[n] = -0.5*alpha[n]*I;
   }
   double dt2  = dt/2;
   double dt32 = 3*dt/2;
   double Nx_inv = 1.0/Nx;
-  double* A = new double[Nx];
-  double* B = new double[Nx];
+  double* A = malloc(Nx*sizeof(double));
+  double* B = malloc(Nx*sizeof(double));
   for (int n=0; n<Nx; ++n) {
     A[n] = 1.0 + dt2*L[n];
     B[n] = 1.0/(1.0 - dt2*L[n]);
   }
-  Complex* uu = new Complex[Nx];  
+  Complex* uu = malloc(Nx*sizeof(Complex));  
   for (int n=0; n<Nx; ++n) 
     uu[n] = u[n]*u[n];
 
-  fftw_complex* u_fftw  =  reinterpret_cast<fftw_complex*>(u);
-  fftw_complex* uu_fftw =  reinterpret_cast<fftw_complex*>(uu);
+  fftw_complex* u_fftw  =  u;
+  fftw_complex* uu_fftw =  uu;
   fftw_plan u_fftw_plan   = fftw_plan_dft_1d(Nx, u_fftw,  u_fftw,  FFTW_FORWARD, FFTW_ESTIMATE);
   fftw_plan u_ifftw_plan  = fftw_plan_dft_1d(Nx, u_fftw,  u_fftw,  FFTW_BACKWARD, FFTW_ESTIMATE);
   fftw_plan uu_fftw_plan  = fftw_plan_dft_1d(Nx, uu_fftw, uu_fftw, FFTW_FORWARD,  FFTW_ESTIMATE);
   fftw_plan uu_ifftw_plan = fftw_plan_dft_1d(Nx, uu_fftw, uu_fftw, FFTW_BACKWARD, FFTW_ESTIMATE);
 
   fftw_execute(uu_fftw_plan); 
-  Complex* Nn = new Complex[Nx];  
+  Complex* Nn = malloc(Nx*sizeof(Complex));
   for (int n=0; n<Nx; ++n) 
     Nn[n] = G[n]*uu[n];
-  Complex* Nn1 = new Complex[Nx];  
+  Complex* Nn1 = malloc(Nx*sizeof(Complex));
 
   fftw_execute(u_fftw_plan);
   
@@ -142,10 +137,10 @@ void ksintegrate(Complex* u, int Nx, double Lx, double dt, int Nt) {
     for (int n=0; n<Nx; ++n) 
       uu[n] *= Nx_inv; 
     for (int n=0; n<Nx; ++n) 
-      uu[n] = uu[n]*uu[n];       // compute uu = u^2 physical
-    fftw_execute(uu_fftw_plan);  // transform uu physical -> spectral
+      uu[n] = uu[n]*uu[n];       /* compute uu = u^2 physical */
+    fftw_execute(uu_fftw_plan);  /* transform uu physical -> spectral */
     for (int n=0; n<Nx; ++n) 
-      Nn[n] = G[n]*uu[n];        // compute Nn == -u u_x, spectral
+      Nn[n] = G[n]*uu[n];        /* compute Nn == -u u_x, spectral */
     for (int n=0; n<Nx; ++n) 
       u[n] = B[n] * (A[n] * u[n] + dt32*Nn[n] - dt2*Nn1[n]);
   }
@@ -157,16 +152,16 @@ void ksintegrate(Complex* u, int Nx, double Lx, double dt, int Nt) {
   fftw_destroy_plan(uu_fftw_plan);
   fftw_destroy_plan(u_ifftw_plan);
   fftw_destroy_plan(uu_ifftw_plan);
-  delete[] kx;
-  delete[] alpha;
-  delete[] D;
-  delete[] G;
-  delete[] L;
-  delete[] A;
-  delete[] B;
-  delete[] uu;
-  delete[] Nn;
-  delete[] Nn1;
+  free(kx);
+  free(alpha);
+  free(D);
+  free(G);
+  free(L);
+  free(A);
+  free(B);
+  free(uu);
+  free(Nn);
+  free(Nn1);
 }
 
 inline double square(double x) {return x*x;}
@@ -174,6 +169,6 @@ inline double square(double x) {return x*x;}
 double ksnorm(Complex* u, int Nx) {
   double s = 0.0;
   for (int n=0; n<Nx; ++n)
-    s += square(abs(u[n]));
+    s += square(cabs(u[n]));
   return sqrt(s/Nx);
 }

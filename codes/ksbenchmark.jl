@@ -4,7 +4,7 @@ using FFTW
   ksbenchmark(Nx, ksintegrator): benchmark a kuramoto-sivashinksy integration algorithm
     on Nx gridpoints. Usage example: ksbenchmark(512, ksintegrateNaive)
 """
-function ksbenchmark(Nx, ksintegrator, printnorms=false)
+function ksbenchmark(Nx, ksintegrator, Nruns, printnorms=false)
 
     Lx = Nx/16*pi             # spatial domain [0, L] periodic
     dt = 1/16                 # discrete time step 
@@ -16,7 +16,6 @@ function ksbenchmark(Nx, ksintegrator, printnorms=false)
     u0 = cos.(x) + 0.1*sin.(x/8) + 0.01*cos.((2*pi/Lx)*x) 
     u = copy(u0)
 
-    Nruns = 5
     skip = 1
     avgtime = 0
     
@@ -255,7 +254,7 @@ function ksinitconds(Nx)
     Nt = round(Int, T/dt)     # total number of timesteps
  
     x = Lx*(0:Nx-1)/Nx
-    u0 = cos.(x) + 0.2*sin.(x/8) + 0.01*cos.(x/16) 
+    u0 = cos.(x) + 0.1*sin.(x/8) + 0.01*cos.(x/16) 
 
     u0, Lx, dt, Nt
 end
