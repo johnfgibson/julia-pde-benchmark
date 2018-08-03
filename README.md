@@ -15,3 +15,5 @@ The results show that Julia is competitive with Python and Matlab in line count 
 and C++ and Fortran for execution speed. 
 
 Complete results and discussion are in [1-Kuramoto-Sivashinksy-benchmark.ipynb](1-Kuramoto-Sivashinksy-benchmark.ipynb)
+
+Funding for this research was provided by the National Science Foundation CBET award number 1554149. 
