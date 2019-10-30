@@ -1,10 +1,10 @@
 using FFTW
 
 """
-  ksbenchmark(Nx, ksintegrator): benchmark a kuramoto-sivashinksy integration algorithm
+  ksbenchmark(Nx, ksintegrator,Nruns=4,printnroms=false): benchmark a kuramoto-sivashinksy integration algorithm
     on Nx gridpoints. Usage example: ksbenchmark(512, ksintegrateNaive)
 """
-function ksbenchmark(Nx, ksintegrator, Nruns, printnorms=false)
+function ksbenchmark(Nx, ksintegrator, Nruns=4, printnorms=false)
 
     Lx = Nx/16*pi             # spatial domain [0, L] periodic
     dt = 1/16                 # discrete time step 
@@ -13,16 +13,15 @@ function ksbenchmark(Nx, ksintegrator, Nruns, printnorms=false)
     Nt = round(Int, T/dt)     # total number of timesteps
  
     x = Lx*(0:Nx-1)/Nx
-    u0 = cos.(x) + 0.1*sin.(x/8) + 0.01*cos.((2*pi/Lx)*x) 
+    u0 = cos.(x) + 0.1*sin.(x/8) + 0.01*cos.((2*pi/Lx)*x) .+ 0im
     u = copy(u0)
 
     skip = 1
     avgtime = 0
     
+
     for run=1:Nruns
-        tic()
-        u .= ksintegrator(u0, Lx, dt, Nt)
-        cputime = toc()
+        cputime = @elapsed ksintegrator(u0, Lx, dt, Nt)
         if run > skip
             avgtime = avgtime + cputime
         end
